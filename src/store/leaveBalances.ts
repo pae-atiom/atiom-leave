@@ -55,6 +55,51 @@ export function applyUsedDelta(
   })
 }
 
+/**
+ * Set a user's base entitlement for a leave type and log it on the audit trail.
+ * Entitlement is per-user (e.g. annual leave varies by seniority); the policy's
+ * `annualEntitlementDays` is only the company default applied at seed time.
+ */
+export function setEntitlement(
+  userId: string,
+  leaveType: LeaveTypeName,
+  totalEntitled: number,
+  actorId: string,
+  year = CURRENT_YEAR,
+): LeaveBalance {
+  return mutateStore((store) => {
+    let idx = indexOfBalance(store, userId, leaveType, year)
+    if (idx === -1) {
+      store.leaveBalances.push({
+        id: generateId('bal'),
+        userId,
+        leaveType,
+        year,
+        totalEntitled: 0,
+        used: 0,
+        manualAdjustment: 0,
+      })
+      idx = store.leaveBalances.length - 1
+    }
+    const previous = store.leaveBalances[idx].totalEntitled
+    store.leaveBalances[idx] = {
+      ...store.leaveBalances[idx],
+      totalEntitled,
+    }
+    appendAudit(store, {
+      id: generateId('audit'),
+      requestId: `balance:${userId}:${leaveType}`,
+      action: 'balance_adjusted',
+      actorId,
+      timestamp: nowIso(),
+      note: `Set ${leaveType} entitlement to ${totalEntitled} day(s) (was ${previous})`,
+      fromStatus: null,
+      toStatus: 'approved',
+    })
+    return store.leaveBalances[idx]
+  })
+}
+
 /** HR manual adjustment: set the adjustment delta and log it on the audit trail. */
 export function adjustBalance(
   userId: string,

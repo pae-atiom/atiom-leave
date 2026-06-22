@@ -20,7 +20,7 @@ function Policies() {
     <div>
       <PageHeader
         title="Leave policies"
-        description="Configure entitlements and document requirements."
+        description="Configure company-default entitlements and document requirements. Per-employee entitlements (e.g. annual leave by seniority) are set on each employee's page."
       />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {(policies ?? []).map((p) => (
@@ -51,7 +51,7 @@ function PolicyCard({ policy }: { policy: LeavePolicy }) {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <FieldGroup label="Annual entitlement (days)">
+        <FieldGroup label="Default entitlement (days)">
           <Input
             type="number"
             step="0.5"

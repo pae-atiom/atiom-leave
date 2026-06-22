@@ -23,7 +23,7 @@ import { Route as AuthHrCalendarRouteImport } from './routes/_auth/hr/calendar'
 import { Route as AuthEmployeeHistoryRouteImport } from './routes/_auth/employee/history'
 import { Route as AuthEmployeeDashboardRouteImport } from './routes/_auth/employee/dashboard'
 import { Route as AuthManagerApproveIdRouteImport } from './routes/_auth/manager/approve.$id'
-import { Route as AuthHrEmployeesIdRouteImport } from './routes/_auth/hr/employees.$id'
+import { Route as AuthHrEmployeesIdRouteImport } from './routes/_auth/hr/employees_.$id'
 import { Route as AuthEmployeeRequestNewRouteImport } from './routes/_auth/employee/request.new'
 import { Route as AuthEmployeeRequestIdRouteImport } from './routes/_auth/employee/request.$id'
 import { Route as AuthEmployeeRequestIdEditRouteImport } from './routes/_auth/employee/request.$id.edit'
@@ -98,9 +98,9 @@ const AuthManagerApproveIdRoute = AuthManagerApproveIdRouteImport.update({
   getParentRoute: () => AuthRoute,
 } as any)
 const AuthHrEmployeesIdRoute = AuthHrEmployeesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AuthHrEmployeesRoute,
+  id: '/hr/employees_/$id',
+  path: '/hr/employees/$id',
+  getParentRoute: () => AuthRoute,
 } as any)
 const AuthEmployeeRequestNewRoute = AuthEmployeeRequestNewRouteImport.update({
   id: '/employee/request/new',
@@ -126,7 +126,7 @@ export interface FileRoutesByFullPath {
   '/employee/history': typeof AuthEmployeeHistoryRoute
   '/hr/calendar': typeof AuthHrCalendarRoute
   '/hr/dashboard': typeof AuthHrDashboardRoute
-  '/hr/employees': typeof AuthHrEmployeesRouteWithChildren
+  '/hr/employees': typeof AuthHrEmployeesRoute
   '/hr/policies': typeof AuthHrPoliciesRoute
   '/hr/records': typeof AuthHrRecordsRoute
   '/manager/calendar': typeof AuthManagerCalendarRoute
@@ -145,7 +145,7 @@ export interface FileRoutesByTo {
   '/employee/history': typeof AuthEmployeeHistoryRoute
   '/hr/calendar': typeof AuthHrCalendarRoute
   '/hr/dashboard': typeof AuthHrDashboardRoute
-  '/hr/employees': typeof AuthHrEmployeesRouteWithChildren
+  '/hr/employees': typeof AuthHrEmployeesRoute
   '/hr/policies': typeof AuthHrPoliciesRoute
   '/hr/records': typeof AuthHrRecordsRoute
   '/manager/calendar': typeof AuthManagerCalendarRoute
@@ -166,7 +166,7 @@ export interface FileRoutesById {
   '/_auth/employee/history': typeof AuthEmployeeHistoryRoute
   '/_auth/hr/calendar': typeof AuthHrCalendarRoute
   '/_auth/hr/dashboard': typeof AuthHrDashboardRoute
-  '/_auth/hr/employees': typeof AuthHrEmployeesRouteWithChildren
+  '/_auth/hr/employees': typeof AuthHrEmployeesRoute
   '/_auth/hr/policies': typeof AuthHrPoliciesRoute
   '/_auth/hr/records': typeof AuthHrRecordsRoute
   '/_auth/manager/calendar': typeof AuthManagerCalendarRoute
@@ -174,7 +174,7 @@ export interface FileRoutesById {
   '/_auth/manager/team': typeof AuthManagerTeamRoute
   '/_auth/employee/request/$id': typeof AuthEmployeeRequestIdRouteWithChildren
   '/_auth/employee/request/new': typeof AuthEmployeeRequestNewRoute
-  '/_auth/hr/employees/$id': typeof AuthHrEmployeesIdRoute
+  '/_auth/hr/employees_/$id': typeof AuthHrEmployeesIdRoute
   '/_auth/manager/approve/$id': typeof AuthManagerApproveIdRoute
   '/_auth/employee/request/$id/edit': typeof AuthEmployeeRequestIdEditRoute
 }
@@ -234,7 +234,7 @@ export interface FileRouteTypes {
     | '/_auth/manager/team'
     | '/_auth/employee/request/$id'
     | '/_auth/employee/request/new'
-    | '/_auth/hr/employees/$id'
+    | '/_auth/hr/employees_/$id'
     | '/_auth/manager/approve/$id'
     | '/_auth/employee/request/$id/edit'
   fileRoutesById: FileRoutesById
@@ -345,12 +345,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthManagerApproveIdRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/_auth/hr/employees/$id': {
-      id: '/_auth/hr/employees/$id'
-      path: '/$id'
+    '/_auth/hr/employees_/$id': {
+      id: '/_auth/hr/employees_/$id'
+      path: '/hr/employees/$id'
       fullPath: '/hr/employees/$id'
       preLoaderRoute: typeof AuthHrEmployeesIdRouteImport
-      parentRoute: typeof AuthHrEmployeesRoute
+      parentRoute: typeof AuthRoute
     }
     '/_auth/employee/request/new': {
       id: '/_auth/employee/request/new'
@@ -376,18 +376,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthHrEmployeesRouteChildren {
-  AuthHrEmployeesIdRoute: typeof AuthHrEmployeesIdRoute
-}
-
-const AuthHrEmployeesRouteChildren: AuthHrEmployeesRouteChildren = {
-  AuthHrEmployeesIdRoute: AuthHrEmployeesIdRoute,
-}
-
-const AuthHrEmployeesRouteWithChildren = AuthHrEmployeesRoute._addFileChildren(
-  AuthHrEmployeesRouteChildren,
-)
-
 interface AuthEmployeeRequestIdRouteChildren {
   AuthEmployeeRequestIdEditRoute: typeof AuthEmployeeRequestIdEditRoute
 }
@@ -406,7 +394,7 @@ interface AuthRouteChildren {
   AuthEmployeeHistoryRoute: typeof AuthEmployeeHistoryRoute
   AuthHrCalendarRoute: typeof AuthHrCalendarRoute
   AuthHrDashboardRoute: typeof AuthHrDashboardRoute
-  AuthHrEmployeesRoute: typeof AuthHrEmployeesRouteWithChildren
+  AuthHrEmployeesRoute: typeof AuthHrEmployeesRoute
   AuthHrPoliciesRoute: typeof AuthHrPoliciesRoute
   AuthHrRecordsRoute: typeof AuthHrRecordsRoute
   AuthManagerCalendarRoute: typeof AuthManagerCalendarRoute
@@ -414,6 +402,7 @@ interface AuthRouteChildren {
   AuthManagerTeamRoute: typeof AuthManagerTeamRoute
   AuthEmployeeRequestIdRoute: typeof AuthEmployeeRequestIdRouteWithChildren
   AuthEmployeeRequestNewRoute: typeof AuthEmployeeRequestNewRoute
+  AuthHrEmployeesIdRoute: typeof AuthHrEmployeesIdRoute
   AuthManagerApproveIdRoute: typeof AuthManagerApproveIdRoute
 }
 
@@ -422,7 +411,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthEmployeeHistoryRoute: AuthEmployeeHistoryRoute,
   AuthHrCalendarRoute: AuthHrCalendarRoute,
   AuthHrDashboardRoute: AuthHrDashboardRoute,
-  AuthHrEmployeesRoute: AuthHrEmployeesRouteWithChildren,
+  AuthHrEmployeesRoute: AuthHrEmployeesRoute,
   AuthHrPoliciesRoute: AuthHrPoliciesRoute,
   AuthHrRecordsRoute: AuthHrRecordsRoute,
   AuthManagerCalendarRoute: AuthManagerCalendarRoute,
@@ -430,6 +419,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthManagerTeamRoute: AuthManagerTeamRoute,
   AuthEmployeeRequestIdRoute: AuthEmployeeRequestIdRouteWithChildren,
   AuthEmployeeRequestNewRoute: AuthEmployeeRequestNewRoute,
+  AuthHrEmployeesIdRoute: AuthHrEmployeesIdRoute,
   AuthManagerApproveIdRoute: AuthManagerApproveIdRoute,
 }
 
