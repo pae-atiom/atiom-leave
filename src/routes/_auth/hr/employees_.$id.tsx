@@ -5,10 +5,10 @@ import {
   useParams,
 } from '@tanstack/react-router'
 import { ArrowLeft, Save } from 'lucide-react'
-import type { LeaveTypeName } from '#/types'
+import type { LeaveBalance } from '#/types'
 import { useCurrentUser } from '#/hooks/useAuth'
 import { useUpdateUser, useUsers } from '#/queries/directory'
-import { useAdjustBalance, useBalancesByUser } from '#/queries/balances'
+import { useBalancesByUser, useSaveBalanceSettings } from '#/queries/balances'
 import { getRemainingDays } from '#/logic/leaveCalc'
 import { LEAVE_TYPE_LABEL } from '#/lib/labels'
 import { Button } from '#/components/ui/Button'
@@ -17,20 +17,25 @@ import { Card, CardHeader } from '#/components/ui/Card'
 import { EmptyState, PageHeader, PageLoader } from '#/components/ui/Feedback'
 import { useToast } from '#/components/ui/Toast'
 
-export const Route = createFileRoute('/_auth/hr/employees/$id')({
+export const Route = createFileRoute('/_auth/hr/employees_/$id')({
   component: EmployeeDetail,
 })
 
+interface BalanceDraft {
+  entitled: number
+  adjustment: number
+}
+
 function EmployeeDetail() {
-  const { id } = useParams({ from: '/_auth/hr/employees/$id' })
+  const { id } = useParams({ from: '/_auth/hr/employees_/$id' })
   const hr = useCurrentUser()
   const { toast } = useToast()
   const users = useUsers()
   const balances = useBalancesByUser(id)
   const updateUser = useUpdateUser()
-  const adjust = useAdjustBalance()
+  const save = useSaveBalanceSettings()
 
-  const [drafts, setDrafts] = useState<Record<string, number>>({})
+  const [drafts, setDrafts] = useState<Record<string, BalanceDraft>>({})
 
   if (users.isPending || balances.isPending) return <PageLoader />
   const employee = (users.data ?? []).find((u) => u.id === id)
@@ -40,16 +45,41 @@ function EmployeeDetail() {
     (u) => u.role === 'manager' || u.role === 'hr',
   )
 
-  function saveAdjustment(leaveType: LeaveTypeName, current: number) {
-    const value = drafts[leaveType] ?? current
-    adjust.mutate(
+  function draftFor(balance: LeaveBalance): BalanceDraft {
+    return (
+      drafts[balance.leaveType] ?? {
+        entitled: balance.totalEntitled,
+        adjustment: balance.manualAdjustment,
+      }
+    )
+  }
+
+  function patchDraft(balance: LeaveBalance, patch: Partial<BalanceDraft>) {
+    setDrafts((prev) => ({
+      ...prev,
+      [balance.leaveType]: { ...draftFor(balance), ...patch },
+    }))
+  }
+
+  function saveBalance(balance: LeaveBalance) {
+    const draft = draftFor(balance)
+    save.mutate(
       {
-        userId: id,
-        leaveType,
-        manualAdjustment: value,
+        balance,
+        totalEntitled: draft.entitled,
+        manualAdjustment: draft.adjustment,
         actorId: hr.id,
       },
-      { onSuccess: () => toast('Balance adjusted', 'success') },
+      {
+        onSuccess: () => {
+          setDrafts((prev) => {
+            const next = { ...prev }
+            delete next[balance.leaveType]
+            return next
+          })
+          toast('Balance updated', 'success')
+        },
+      },
     )
   }
 
@@ -98,7 +128,7 @@ function EmployeeDetail() {
         <Card className="lg:col-span-2">
           <CardHeader
             title="Leave balances"
-            subtitle="Adjust entitlement manually if needed"
+            subtitle="Set each employee's entitlement individually — e.g. annual leave by seniority"
           />
           <div className="overflow-x-auto scroll-slim">
             <table className="w-full text-sm">
@@ -106,6 +136,7 @@ function EmployeeDetail() {
                 <tr className="border-b border-slate-100 text-left text-xs uppercase tracking-wide text-slate-400">
                   <th className="px-5 py-2.5 font-medium">Type</th>
                   <th className="px-3 py-2.5 text-right font-medium">Used</th>
+                  <th className="px-3 py-2.5 text-right font-medium">Entitled</th>
                   <th className="px-3 py-2.5 text-right font-medium">Adj.</th>
                   <th className="px-3 py-2.5 text-right font-medium">Left</th>
                   <th className="px-3 py-2.5" />
@@ -113,41 +144,56 @@ function EmployeeDetail() {
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {(balances.data ?? []).map((b) => {
-                  const draft = drafts[b.leaveType] ?? b.manualAdjustment
+                  const draft = draftFor(b)
+                  const dirty =
+                    draft.entitled !== b.totalEntitled ||
+                    draft.adjustment !== b.manualAdjustment
                   return (
                     <tr key={b.id}>
                       <td className="px-5 py-2.5 text-slate-700">
                         {LEAVE_TYPE_LABEL[b.leaveType]}
                       </td>
                       <td className="px-3 py-2.5 text-right tabular-nums text-slate-500">
-                        {b.used}/{b.totalEntitled}
+                        {b.used}
                       </td>
                       <td className="px-3 py-2.5 text-right">
                         <input
                           type="number"
                           step="0.5"
-                          value={draft}
+                          min="0"
+                          value={draft.entitled}
                           onChange={(e) =>
-                            setDrafts((prev) => ({
-                              ...prev,
-                              [b.leaveType]: Number(e.target.value),
-                            }))
+                            patchDraft(b, { entitled: Number(e.target.value) })
+                          }
+                          className="w-16 rounded-md px-2 py-1 text-right ring-1 ring-inset ring-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        />
+                      </td>
+                      <td className="px-3 py-2.5 text-right">
+                        <input
+                          type="number"
+                          step="0.5"
+                          value={draft.adjustment}
+                          onChange={(e) =>
+                            patchDraft(b, { adjustment: Number(e.target.value) })
                           }
                           className="w-16 rounded-md px-2 py-1 text-right ring-1 ring-inset ring-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
                         />
                       </td>
                       <td className="px-3 py-2.5 text-right font-medium tabular-nums text-slate-700">
-                        {getRemainingDays({ ...b, manualAdjustment: draft })}
+                        {getRemainingDays({
+                          ...b,
+                          totalEntitled: draft.entitled,
+                          manualAdjustment: draft.adjustment,
+                        })}
                       </td>
                       <td className="px-3 py-2.5 text-right">
-                        {draft !== b.manualAdjustment && (
+                        {dirty && (
                           <Button
                             size="sm"
                             variant="secondary"
                             icon={<Save className="size-3.5" />}
-                            onClick={() =>
-                              saveAdjustment(b.leaveType, b.manualAdjustment)
-                            }
+                            disabled={save.isPending}
+                            onClick={() => saveBalance(b)}
                           >
                             Save
                           </Button>

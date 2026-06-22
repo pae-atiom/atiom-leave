@@ -17,8 +17,21 @@ import type {
 } from '#/types'
 import { calculateTotalDays } from '#/logic/leaveCalc'
 
-export const SEED_VERSION = 1
+export const SEED_VERSION = 2
 export const SEED_YEAR = 2026
+
+// Annual leave is not uniform across the company — it varies per person (e.g. by
+// seniority). The policy's `annualEntitlementDays` is only the company default;
+// these per-user overrides demonstrate individual entitlements. HR can edit any
+// user's entitlement from the employee detail page.
+const ANNUAL_ENTITLEMENT_BY_USER: Record<string, number> = {
+  emp1: 15, // Alice — standard
+  emp2: 18, // Bob — 3 years' tenure
+  emp3: 20, // Citra — 5 years' tenure
+  mgr1: 22, // Dana — manager
+  mgr2: 22, // Eva — manager
+  hr1: 25, // Frank — most senior
+}
 
 const LS_KEY = 'atiom_leave_store'
 
@@ -486,12 +499,16 @@ function buildBalances(requests: LeaveRequest[]): LeaveBalance[] {
             DEDUCTED_STATES.includes(r.status),
         )
         .reduce((sum, r) => sum + r.currentVersion.totalDays, 0)
+      const totalEntitled =
+        policy.leaveType === 'annual'
+          ? (ANNUAL_ENTITLEMENT_BY_USER[user.id] ?? policy.annualEntitlementDays)
+          : policy.annualEntitlementDays
       balances.push({
         id: `bal_${user.id}_${policy.leaveType}`,
         userId: user.id,
         leaveType: policy.leaveType,
         year: SEED_YEAR,
-        totalEntitled: policy.annualEntitlementDays,
+        totalEntitled,
         used,
         manualAdjustment: 0,
       })
