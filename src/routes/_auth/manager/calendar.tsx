@@ -1,7 +1,9 @@
+import { useMemo } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useCurrentUser } from '#/hooks/useAuth'
-import { useRequestsByManager } from '#/queries/requests'
+import { useActiveApprovedRequests } from '#/queries/requests'
 import { toCalendarLeaves } from '#/lib/calendar'
+import { getDirectReports } from '#/store/users'
 import { PageHeader, PageLoader } from '#/components/ui/Feedback'
 import { CalendarView } from '#/components/calendar/CalendarView'
 
@@ -11,21 +13,26 @@ export const Route = createFileRoute('/_auth/manager/calendar')({
 
 function TeamCalendar() {
   const manager = useCurrentUser()
-  const { data: requests, isPending } = useRequestsByManager(manager.id)
+  const { data: requests, isPending } = useActiveApprovedRequests()
+
+  const teamIds = useMemo(
+    () => new Set(getDirectReports(manager.id).map((u) => u.id)),
+    [manager.id],
+  )
 
   if (isPending) return <PageLoader />
-
-  const active = (requests ?? []).filter(
-    (r) => r.status === 'approved' || r.status === 'cancel_pending',
-  )
 
   return (
     <div>
       <PageHeader
-        title="Team calendar"
-        description="Approved leave across your team."
+        title="Company calendar"
+        description="Approved leave across the company. Leave types shown for your team only."
       />
-      <CalendarView leaves={toCalendarLeaves(active)} />
+      <CalendarView
+        leaves={toCalendarLeaves(requests ?? [], {
+          canSeeType: (employeeId) => teamIds.has(employeeId),
+        })}
+      />
     </div>
   )
 }

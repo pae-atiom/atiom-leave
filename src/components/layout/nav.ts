@@ -22,6 +22,7 @@ export const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
     { to: '/employee/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/employee/request/new', label: 'Request leave', icon: CalendarPlus },
     { to: '/employee/history', label: 'My requests', icon: ClipboardList },
+    { to: '/employee/calendar', label: 'Company calendar', icon: CalendarDays },
   ],
   manager: [
     { to: '/manager/dashboard', label: 'Approvals', icon: ListChecks },
