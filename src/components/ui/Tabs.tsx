@@ -31,7 +31,7 @@ export function Tabs<T extends string>({
           className={cn(
             'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
             value === item.value
-              ? 'bg-white text-slate-900 shadow-sm'
+              ? 'bg-surface text-slate-900 shadow-sm'
               : 'text-slate-500 hover:text-slate-700',
           )}
         >

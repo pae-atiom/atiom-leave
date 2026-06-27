@@ -127,7 +127,7 @@ function Stat({
         ? 'text-brand-600'
         : 'text-slate-900'
   return (
-    <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200/80">
+    <div className="rounded-xl bg-surface p-4 ring-1 ring-slate-200/80">
       <div className="flex items-center gap-2 text-slate-400">
         <Icon className="size-4" />
         <span className="text-xs font-medium text-slate-500">{label}</span>

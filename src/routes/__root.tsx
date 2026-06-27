@@ -6,8 +6,12 @@ import { QueryClientProvider } from '@tanstack/react-query'
 
 import { createQueryClient } from '#/lib/queryClient'
 import { AuthProvider } from '#/hooks/useAuth'
+import { ThemeProvider } from '#/hooks/useTheme'
 import { ToastProvider } from '#/components/ui/Toast'
 import appCss from '../styles.css?url'
+
+// Applied before first paint to avoid a light→dark flash on reload.
+const themeInitScript = `(function(){try{var t=localStorage.getItem('atiom-theme');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');}catch(e){}})();`
 
 export const Route = createRootRoute({
   // Fully client-rendered: all data is localStorage-backed and auth runs in
@@ -31,13 +35,16 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <HeadContent />
       </head>
       <body>
         <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <ToastProvider>{children}</ToastProvider>
-          </AuthProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <ToastProvider>{children}</ToastProvider>
+            </AuthProvider>
+          </ThemeProvider>
         </QueryClientProvider>
         <TanStackDevtools
           config={{ position: 'bottom-left' }}

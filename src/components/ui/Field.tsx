@@ -7,7 +7,7 @@ import type {
 import { cn } from '#/lib/utils'
 
 const baseControl =
-  'w-full rounded-lg bg-white px-3 py-2 text-sm text-slate-900 ring-1 ring-inset ring-slate-300 ' +
+  'w-full rounded-lg bg-surface px-3 py-2 text-sm text-slate-900 ring-1 ring-inset ring-slate-300 ' +
   'placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:bg-slate-50 disabled:text-slate-400'
 
 export function Label({

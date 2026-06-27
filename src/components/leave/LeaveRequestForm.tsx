@@ -186,7 +186,7 @@ export function LeaveRequestForm({
           <div className="flex flex-col gap-4">
             <RequestSummary summary={summary} />
             {reason && (
-              <div className="rounded-lg bg-white px-3 py-2 text-sm ring-1 ring-slate-200">
+              <div className="rounded-lg bg-surface px-3 py-2 text-sm ring-1 ring-slate-200">
                 <p className="text-xs text-slate-400">Reason</p>
                 <p className="mt-0.5 text-slate-700">{reason}</p>
               </div>

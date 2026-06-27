@@ -75,7 +75,7 @@ function Stat({
 }) {
   const ring = tone === 'amber' ? 'text-amber-600' : 'text-emerald-600'
   return (
-    <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200/80">
+    <div className="rounded-xl bg-surface p-4 ring-1 ring-slate-200/80">
       <p className="text-sm text-slate-500">{label}</p>
       <p className={`mt-1 text-2xl font-semibold ${ring}`}>{value}</p>
     </div>

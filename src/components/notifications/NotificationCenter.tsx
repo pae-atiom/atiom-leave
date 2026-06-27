@@ -54,7 +54,7 @@ export function NotificationCenter() {
       {open && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div className="animate-fade-in absolute right-0 z-40 mt-2 w-80 max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl bg-white shadow-xl ring-1 ring-slate-200">
+          <div className="animate-fade-in absolute right-0 z-40 mt-2 w-80 max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl bg-surface shadow-xl ring-1 ring-slate-200">
             <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
               <span className="text-sm font-semibold text-slate-900">
                 Notifications

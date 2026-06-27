@@ -69,7 +69,7 @@ export function UserMenu() {
       {open && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div className="animate-fade-in absolute right-0 z-40 mt-2 w-72 overflow-hidden rounded-xl bg-white shadow-xl ring-1 ring-slate-200">
+          <div className="animate-fade-in absolute right-0 z-40 mt-2 w-72 overflow-hidden rounded-xl bg-surface shadow-xl ring-1 ring-slate-200">
             <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50/60 px-3 py-2.5">
               <UserCog className="size-4 text-slate-400" />
               <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">

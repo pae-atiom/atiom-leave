@@ -6,6 +6,7 @@ import type { UserRole } from '#/types'
 import { cn } from '#/lib/utils'
 import { NAV_BY_ROLE } from './nav'
 import { NotificationCenter } from '#/components/notifications/NotificationCenter'
+import { ThemeToggle } from './ThemeToggle'
 import { UserMenu } from './UserMenu'
 
 function NavLinks({ role, onNavigate }: { role: UserRole; onNavigate?: () => void }) {
@@ -19,7 +20,7 @@ function NavLinks({ role, onNavigate }: { role: UserRole; onNavigate?: () => voi
           activeOptions={{ exact: false }}
           className="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
           activeProps={{
-            className: 'bg-brand-50 text-brand-700 hover:bg-brand-50',
+            className: 'nav-active',
           }}
         >
           <item.icon className="size-4.5 shrink-0" />
@@ -55,7 +56,7 @@ export function AppShell({
   return (
     <div className="min-h-screen lg:flex">
       {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-white lg:flex lg:flex-col">
+      <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-surface lg:flex lg:flex-col">
         <div className="px-3 py-4">
           <Brand />
         </div>
@@ -68,10 +69,10 @@ export function AppShell({
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
-            className="absolute inset-0 bg-slate-900/40"
+            className="absolute inset-0 bg-black/50"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="animate-fade-in absolute left-0 top-0 flex h-full w-64 flex-col bg-white shadow-xl">
+          <aside className="animate-fade-in absolute left-0 top-0 flex h-full w-64 flex-col bg-surface shadow-xl">
             <div className="flex items-center justify-between px-3 py-4">
               <Brand />
               <button
@@ -89,7 +90,7 @@ export function AppShell({
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur sm:px-6">
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200 bg-surface/90 px-4 backdrop-blur sm:px-6">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setMobileOpen(true)}
@@ -103,6 +104,7 @@ export function AppShell({
             </span>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
+            <ThemeToggle />
             <NotificationCenter />
             <UserMenu />
           </div>

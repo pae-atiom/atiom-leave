@@ -52,7 +52,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div
             key={t.id}
             className={cn(
-              'animate-fade-in pointer-events-auto flex items-center gap-2.5 rounded-lg bg-white px-3.5 py-3 text-sm text-slate-700 shadow-lg ring-1 ring-slate-200',
+              'animate-fade-in pointer-events-auto flex items-center gap-2.5 rounded-lg bg-surface px-3.5 py-3 text-sm text-slate-700 shadow-lg ring-1 ring-slate-200',
             )}
           >
             {ICONS[t.variant]}

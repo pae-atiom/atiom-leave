@@ -39,7 +39,7 @@ export function DurationPicker({
             <span className="text-sm font-medium text-slate-700">
               {formatDate(date)}
             </span>
-            <div className="inline-flex items-center gap-1 rounded-lg bg-white p-1 ring-1 ring-slate-200">
+            <div className="inline-flex items-center gap-1 rounded-lg bg-surface p-1 ring-1 ring-slate-200">
               {OPTIONS.map((opt) => (
                 <button
                   key={opt.value}

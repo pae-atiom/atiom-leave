@@ -26,7 +26,7 @@ export function LeaveRequestCard({
   return (
     <Link
       to={to}
-      className="block rounded-xl bg-white p-4 ring-1 ring-slate-200/80 transition-shadow hover:shadow-md"
+      className="block rounded-xl bg-surface p-4 ring-1 ring-slate-200/80 transition-shadow hover:shadow-md"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">

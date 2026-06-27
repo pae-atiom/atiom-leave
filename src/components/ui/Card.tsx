@@ -8,7 +8,7 @@ export function Card({
   return (
     <div
       className={cn(
-        'rounded-xl bg-white ring-1 ring-slate-200/80 shadow-sm',
+        'rounded-xl bg-surface ring-1 ring-slate-200/80 shadow-sm',
         className,
       )}
       {...rest}
