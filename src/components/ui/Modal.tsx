@@ -36,14 +36,14 @@ export function Modal({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
       <div
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
       <div
         role="dialog"
         aria-modal="true"
         className={cn(
-          'animate-fade-in relative w-full rounded-t-2xl bg-white shadow-xl sm:rounded-2xl',
+          'animate-fade-in relative w-full rounded-t-2xl bg-surface shadow-xl sm:rounded-2xl',
           SIZES[size],
         )}
       >

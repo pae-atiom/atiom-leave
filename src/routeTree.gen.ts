@@ -22,6 +22,7 @@ import { Route as AuthHrDashboardRouteImport } from './routes/_auth/hr/dashboard
 import { Route as AuthHrCalendarRouteImport } from './routes/_auth/hr/calendar'
 import { Route as AuthEmployeeHistoryRouteImport } from './routes/_auth/employee/history'
 import { Route as AuthEmployeeDashboardRouteImport } from './routes/_auth/employee/dashboard'
+import { Route as AuthEmployeeCalendarRouteImport } from './routes/_auth/employee/calendar'
 import { Route as AuthManagerApproveIdRouteImport } from './routes/_auth/manager/approve.$id'
 import { Route as AuthHrEmployeesIdRouteImport } from './routes/_auth/hr/employees_.$id'
 import { Route as AuthEmployeeRequestNewRouteImport } from './routes/_auth/employee/request.new'
@@ -92,6 +93,11 @@ const AuthEmployeeDashboardRoute = AuthEmployeeDashboardRouteImport.update({
   path: '/employee/dashboard',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthEmployeeCalendarRoute = AuthEmployeeCalendarRouteImport.update({
+  id: '/employee/calendar',
+  path: '/employee/calendar',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthManagerApproveIdRoute = AuthManagerApproveIdRouteImport.update({
   id: '/manager/approve/$id',
   path: '/manager/approve/$id',
@@ -122,6 +128,7 @@ const AuthEmployeeRequestIdEditRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/employee/calendar': typeof AuthEmployeeCalendarRoute
   '/employee/dashboard': typeof AuthEmployeeDashboardRoute
   '/employee/history': typeof AuthEmployeeHistoryRoute
   '/hr/calendar': typeof AuthHrCalendarRoute
@@ -141,6 +148,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/employee/calendar': typeof AuthEmployeeCalendarRoute
   '/employee/dashboard': typeof AuthEmployeeDashboardRoute
   '/employee/history': typeof AuthEmployeeHistoryRoute
   '/hr/calendar': typeof AuthHrCalendarRoute
@@ -162,6 +170,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteWithChildren
   '/login': typeof LoginRoute
+  '/_auth/employee/calendar': typeof AuthEmployeeCalendarRoute
   '/_auth/employee/dashboard': typeof AuthEmployeeDashboardRoute
   '/_auth/employee/history': typeof AuthEmployeeHistoryRoute
   '/_auth/hr/calendar': typeof AuthHrCalendarRoute
@@ -183,6 +192,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/employee/calendar'
     | '/employee/dashboard'
     | '/employee/history'
     | '/hr/calendar'
@@ -202,6 +212,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/employee/calendar'
     | '/employee/dashboard'
     | '/employee/history'
     | '/hr/calendar'
@@ -222,6 +233,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_auth'
     | '/login'
+    | '/_auth/employee/calendar'
     | '/_auth/employee/dashboard'
     | '/_auth/employee/history'
     | '/_auth/hr/calendar'
@@ -338,6 +350,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthEmployeeDashboardRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/employee/calendar': {
+      id: '/_auth/employee/calendar'
+      path: '/employee/calendar'
+      fullPath: '/employee/calendar'
+      preLoaderRoute: typeof AuthEmployeeCalendarRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/manager/approve/$id': {
       id: '/_auth/manager/approve/$id'
       path: '/manager/approve/$id'
@@ -390,6 +409,7 @@ const AuthEmployeeRequestIdRouteWithChildren =
   )
 
 interface AuthRouteChildren {
+  AuthEmployeeCalendarRoute: typeof AuthEmployeeCalendarRoute
   AuthEmployeeDashboardRoute: typeof AuthEmployeeDashboardRoute
   AuthEmployeeHistoryRoute: typeof AuthEmployeeHistoryRoute
   AuthHrCalendarRoute: typeof AuthHrCalendarRoute
@@ -407,6 +427,7 @@ interface AuthRouteChildren {
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
+  AuthEmployeeCalendarRoute: AuthEmployeeCalendarRoute,
   AuthEmployeeDashboardRoute: AuthEmployeeDashboardRoute,
   AuthEmployeeHistoryRoute: AuthEmployeeHistoryRoute,
   AuthHrCalendarRoute: AuthHrCalendarRoute,

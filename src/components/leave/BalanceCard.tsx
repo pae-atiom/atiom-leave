@@ -26,7 +26,7 @@ export function BalanceCard({
   const unlimited = entitled === 0 && !policy.isPaid
 
   return (
-    <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200/80">
+    <div className="rounded-xl bg-surface p-4 ring-1 ring-slate-200/80">
       <div className="flex items-center gap-2">
         <span
           className={cn('size-2.5 rounded-full', DOT[balance.leaveType])}

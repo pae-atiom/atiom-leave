@@ -5,6 +5,7 @@ import { homePathForRole } from '#/lib/auth'
 import { useAuth } from '#/hooks/useAuth'
 import { useUsers } from '#/queries/directory'
 import { Spinner } from '#/components/ui/Feedback'
+import { ThemeToggle } from '#/components/layout/ThemeToggle'
 
 export const Route = createFileRoute('/login')({ component: LoginPage })
 
@@ -27,7 +28,10 @@ function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-brand-50 via-canvas to-slate-100 px-4 py-10">
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-canvas via-canvas to-slate-100 px-4 py-10">
+      <div className="absolute right-4 top-4">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">
           <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-brand-600 text-white shadow-lg shadow-brand-600/30">
@@ -41,7 +45,7 @@ function LoginPage() {
           </p>
         </div>
 
-        <div className="rounded-2xl bg-white p-2 shadow-sm ring-1 ring-slate-200">
+        <div className="rounded-2xl bg-surface p-2 shadow-sm ring-1 ring-slate-200">
           {isPending ? (
             <div className="flex h-32 items-center justify-center">
               <Spinner className="size-5" />

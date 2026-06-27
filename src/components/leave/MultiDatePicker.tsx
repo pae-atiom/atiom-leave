@@ -24,7 +24,7 @@ export function MultiDatePicker({
   const selected = value.map(isoToDate)
 
   return (
-    <div className="rounded-xl bg-white p-2 ring-1 ring-slate-200">
+    <div className="rounded-xl bg-surface p-2 ring-1 ring-slate-200">
       <DayPicker
         mode="multiple"
         selected={selected}
