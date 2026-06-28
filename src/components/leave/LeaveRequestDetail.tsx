@@ -1,13 +1,69 @@
 import type { ReactNode } from 'react'
-import { CalendarRange, FileText, History, MessageSquare } from 'lucide-react'
-import type { AuditLogEntry, LeaveRequest } from '#/types'
+import { useState } from 'react'
+import {
+  CalendarRange,
+  Download,
+  FileText,
+  History,
+  Loader2,
+  MessageSquare,
+} from 'lucide-react'
+import type { Attachment, AuditLogEntry, LeaveRequest } from '#/types'
 import { DURATION_LABEL } from '#/logic/leaveCalc'
 import { formatDate, formatDateTime, formatDays } from '#/lib/utils'
+import { api } from '#/lib/api'
 import { LEAVE_TYPE_LABEL } from '#/lib/labels'
-import { getUserById } from '#/store/users'
+import { useUsers } from '#/queries/directory'
 import { Card, CardHeader } from '#/components/ui/Card'
 import { StatusBadge } from '#/components/ui/Badge'
 import { AuditTrail } from './AuditTrail'
+
+/** Attachment row: downloads via a short-lived presigned S3 URL on click.
+ *  Legacy attachments with no storageKey render as plain (non-clickable) text. */
+function AttachmentRow({ attachment }: { attachment: Attachment }) {
+  const [loading, setLoading] = useState(false)
+
+  if (!attachment.storageKey) {
+    return (
+      <li className="flex items-center gap-2 text-sm text-slate-600">
+        <FileText className="size-4 text-slate-400" />
+        {attachment.filename}
+      </li>
+    )
+  }
+
+  async function open() {
+    setLoading(true)
+    try {
+      const { url } = await api.attachments.downloadUrl(
+        attachment.storageKey!,
+        attachment.filename,
+      )
+      window.open(url, '_blank', 'noopener,noreferrer')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={open}
+        disabled={loading}
+        className="flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700 hover:underline disabled:opacity-60"
+      >
+        {loading ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <FileText className="size-4 text-slate-400" />
+        )}
+        {attachment.filename}
+        {!loading && <Download className="size-3.5 text-slate-400" />}
+      </button>
+    </li>
+  )
+}
 
 export function LeaveRequestDetail({
   request,
@@ -21,8 +77,10 @@ export function LeaveRequestDetail({
   actions?: ReactNode
 }) {
   const v = request.currentVersion
-  const employee = getUserById(request.employeeId)
-  const manager = getUserById(request.managerId)
+  const { data: users = [] } = useUsers()
+  const nameById = new Map(users.map((u) => [u.id, u.name]))
+  const employeeName = nameById.get(request.employeeId)
+  const managerName = nameById.get(request.managerId)
 
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
@@ -30,9 +88,9 @@ export function LeaveRequestDetail({
         <Card>
           <div className="flex items-start justify-between gap-3 px-5 py-4">
             <div>
-              {showEmployee && employee && (
+              {showEmployee && employeeName && (
                 <p className="text-xs font-medium text-slate-400">
-                  {employee.name} · reports to {manager?.name ?? '—'}
+                  {employeeName} · reports to {managerName ?? '—'}
                 </p>
               )}
               <h2 className="text-lg font-semibold text-slate-900">
@@ -81,13 +139,7 @@ export function LeaveRequestDetail({
               </p>
               <ul className="flex flex-col gap-1.5">
                 {v.attachments.map((a) => (
-                  <li
-                    key={a.id}
-                    className="flex items-center gap-2 text-sm text-slate-600"
-                  >
-                    <FileText className="size-4 text-slate-400" />
-                    {a.filename}
-                  </li>
+                  <AttachmentRow key={a.id} attachment={a} />
                 ))}
               </ul>
             </div>

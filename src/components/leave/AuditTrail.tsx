@@ -11,7 +11,7 @@ import {
 import type { AuditAction, AuditLogEntry } from '#/types'
 import { formatDateTime } from '#/lib/utils'
 import { AUDIT_LABEL } from '#/lib/labels'
-import { getUserById } from '#/store/users'
+import { useUsers } from '#/queries/directory'
 
 const ICON: Record<AuditAction, typeof Send> = {
   submitted: Send,
@@ -36,6 +36,9 @@ const TONE: Record<AuditAction, string> = {
 }
 
 export function AuditTrail({ entries }: { entries: AuditLogEntry[] }) {
+  const { data: users = [] } = useUsers()
+  const nameById = new Map(users.map((u) => [u.id, u.name]))
+
   if (entries.length === 0) {
     return <p className="text-sm text-slate-400">No activity recorded.</p>
   }
@@ -43,7 +46,7 @@ export function AuditTrail({ entries }: { entries: AuditLogEntry[] }) {
     <ol className="flex flex-col">
       {entries.map((entry, i) => {
         const Icon = ICON[entry.action]
-        const actor = getUserById(entry.actorId)
+        const actorName = nameById.get(entry.actorId)
         return (
           <li key={entry.id} className="flex gap-3">
             <div className="flex flex-col items-center">
@@ -61,7 +64,7 @@ export function AuditTrail({ entries }: { entries: AuditLogEntry[] }) {
                 {AUDIT_LABEL[entry.action]}
                 <span className="font-normal text-slate-500">
                   {' '}
-                  by {actor?.name ?? 'Unknown'}
+                  by {actorName ?? 'Unknown'}
                 </span>
               </p>
               <p className="text-xs text-slate-400">

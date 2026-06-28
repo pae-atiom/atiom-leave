@@ -6,7 +6,6 @@ import {
 } from '@tanstack/react-router'
 import { ArrowLeft, Save } from 'lucide-react'
 import type { LeaveBalance } from '#/types'
-import { useCurrentUser } from '#/hooks/useAuth'
 import { useUpdateUser, useUsers } from '#/queries/directory'
 import { useBalancesByUser, useSaveBalanceSettings } from '#/queries/balances'
 import { getRemainingDays } from '#/logic/leaveCalc'
@@ -28,7 +27,6 @@ interface BalanceDraft {
 
 function EmployeeDetail() {
   const { id } = useParams({ from: '/_auth/hr/employees_/$id' })
-  const hr = useCurrentUser()
   const { toast } = useToast()
   const users = useUsers()
   const balances = useBalancesByUser(id)
@@ -68,7 +66,6 @@ function EmployeeDetail() {
         balance,
         totalEntitled: draft.entitled,
         manualAdjustment: draft.adjustment,
-        actorId: hr.id,
       },
       {
         onSuccess: () => {

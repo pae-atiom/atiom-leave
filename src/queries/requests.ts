@@ -4,53 +4,37 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import type { User } from '#/types'
-import {
-  approveRequest,
-  cancelPendingRequest,
-  createRequest,
-  decideCancellation,
-  editRequest,
-  getActiveApprovedRequests,
-  getPendingForManager,
-  getRequestById,
-  getRequests,
-  getRequestsByEmployee,
-  getRequestsByManager,
-  rejectRequest,
-  requestCancellation,
-} from '#/store/leaveRequests'
-import type { RequestInput } from '#/store/leaveRequests'
-import { getAuditByRequest } from '#/store/auditLog'
+import type { RequestInput } from '#/types'
+import { api } from '#/lib/api'
 import { queryKeys } from './keys'
 
 // ─── Query options ──────────────────────────────────────────────────────────
 
 export const allRequestsQuery = () =>
-  queryOptions({ queryKey: queryKeys.requests, queryFn: () => getRequests() })
+  queryOptions({ queryKey: queryKeys.requests, queryFn: () => api.requests.all() })
 
 export const requestsByUserQuery = (userId: string) =>
   queryOptions({
     queryKey: queryKeys.requestsByUser(userId),
-    queryFn: () => getRequestsByEmployee(userId),
+    queryFn: () => api.requests.byEmployee(userId),
   })
 
 export const requestsByManagerQuery = (managerId: string) =>
   queryOptions({
     queryKey: queryKeys.requestsByManager(managerId),
-    queryFn: () => getRequestsByManager(managerId),
+    queryFn: () => api.requests.byManager(managerId),
   })
 
 export const requestDetailQuery = (id: string) =>
   queryOptions({
     queryKey: queryKeys.requestDetail(id),
-    queryFn: () => getRequestById(id) ?? null,
+    queryFn: () => api.requests.detail(id),
   })
 
 export const auditQuery = (requestId: string) =>
   queryOptions({
     queryKey: queryKeys.audit(requestId),
-    queryFn: () => getAuditByRequest(requestId),
+    queryFn: () => api.requests.audit(requestId),
   })
 
 // ─── Read hooks ───────────────────────────────────────────────────────────────
@@ -72,70 +56,53 @@ export const useAuditTrail = (requestId: string) =>
 export const usePendingForManager = (managerId: string) =>
   useQuery({
     queryKey: [...queryKeys.requestsByManager(managerId), 'pending'],
-    queryFn: () => getPendingForManager(managerId),
+    queryFn: () => api.requests.pending(managerId),
   })
 
 export const useActiveApprovedRequests = () =>
   useQuery({
     queryKey: [...queryKeys.requests, 'approved'],
-    queryFn: () => getActiveApprovedRequests(),
+    queryFn: () => api.requests.activeApproved(),
   })
 
 // ─── Mutations ────────────────────────────────────────────────────────────────
-// Data lives in one localStorage-backed store, so we invalidate everything after
-// each mutation — cheap (no network) and guarantees balances/notifications/audit
-// all reflect the change.
+// The server derives the caller from the JWT, so mutations no longer pass
+// actor/employee. We invalidate everything on success so balances, notifications
+// and audit all reflect the change.
 
-function useStoreMutation<TArgs, TResult>(fn: (args: TArgs) => TResult) {
+function useApiMutation<TArgs, TData>(fn: (args: TArgs) => Promise<TData>) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (args: TArgs): Promise<TResult> => fn(args),
+    mutationFn: fn,
     onSuccess: () => qc.invalidateQueries(),
   })
 }
 
 export const useCreateRequest = () =>
-  useStoreMutation(({ employee, input }: { employee: User; input: RequestInput }) =>
-    createRequest(employee, input),
-  )
+  useApiMutation((input: RequestInput) => api.requests.create(input))
 
 export const useEditRequest = () =>
-  useStoreMutation(
-    ({
-      id,
-      actor,
-      input,
-    }: {
-      id: string
-      actor: User
-      input: RequestInput
-    }) => editRequest(id, actor, input),
+  useApiMutation(({ id, input }: { id: string; input: RequestInput }) =>
+    api.requests.edit(id, input),
   )
 
 export const useApproveRequest = () =>
-  useStoreMutation(({ id, actor }: { id: string; actor: User }) =>
-    approveRequest(id, actor),
-  )
+  useApiMutation((id: string) => api.requests.approve(id))
 
 export const useRejectRequest = () =>
-  useStoreMutation(
-    ({ id, actor, comment }: { id: string; actor: User; comment: string }) =>
-      rejectRequest(id, actor, comment),
+  useApiMutation(({ id, comment }: { id: string; comment: string }) =>
+    api.requests.reject(id, comment),
   )
 
 export const useCancelPending = () =>
-  useStoreMutation(({ id, actor }: { id: string; actor: User }) =>
-    cancelPendingRequest(id, actor),
-  )
+  useApiMutation((id: string) => api.requests.cancel(id))
 
 export const useRequestCancellation = () =>
-  useStoreMutation(
-    ({ id, actor, reason }: { id: string; actor: User; reason: string }) =>
-      requestCancellation(id, actor, reason),
+  useApiMutation(({ id, reason }: { id: string; reason: string }) =>
+    api.requests.requestCancellation(id, reason),
   )
 
 export const useDecideCancellation = () =>
-  useStoreMutation(
-    ({ id, actor, approve }: { id: string; actor: User; approve: boolean }) =>
-      decideCancellation(id, actor, approve),
+  useApiMutation(({ id, approve }: { id: string; approve: boolean }) =>
+    api.requests.decideCancellation(id, approve),
   )

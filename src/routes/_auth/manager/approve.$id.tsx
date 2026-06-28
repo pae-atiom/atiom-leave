@@ -16,10 +16,10 @@ import {
   useRequestsByManager,
 } from '#/queries/requests'
 import { useBalancesByUser } from '#/queries/balances'
+import { useUsers } from '#/queries/directory'
 import { findOverlaps } from '#/logic/overlap'
 import { getRemainingDays } from '#/logic/leaveCalc'
 import { formatDateRange, formatDays } from '#/lib/utils'
-import { getUserById } from '#/store/users'
 import { Button } from '#/components/ui/Button'
 import { Modal } from '#/components/ui/Modal'
 import { Textarea } from '#/components/ui/Field'
@@ -41,6 +41,7 @@ function ApprovePage() {
   const { data: audit = [] } = useAuditTrail(id)
   const { data: teamRequests = [] } = useRequestsByManager(manager.id)
   const { data: balances = [] } = useBalancesByUser(request?.employeeId ?? '')
+  const { data: users = [] } = useUsers()
 
   const approve = useApproveRequest()
   const reject = useRejectRequest()
@@ -52,7 +53,8 @@ function ApprovePage() {
   if (isPending) return <PageLoader />
   if (!request) return <EmptyState title="Request not found" />
 
-  const employee = getUserById(request.employeeId)
+  const nameById = new Map(users.map((u) => [u.id, u.name]))
+  const employeeName = nameById.get(request.employeeId)
   const overlaps = findOverlaps(request, teamRequests)
   const balance = balances.find(
     (b) => b.leaveType === request.currentVersion.leaveType,
@@ -71,7 +73,7 @@ function ApprovePage() {
       <div className="flex flex-col gap-2">
         {balance && (
           <p className="text-sm text-slate-500">
-            {employee?.name.split(' ')[0]}’s {request.currentVersion.leaveType}{' '}
+            {employeeName?.split(' ')[0]}’s {request.currentVersion.leaveType}{' '}
             balance:{' '}
             <span className="font-medium text-slate-700">
               {formatDays(getRemainingDays(balance))} remaining
@@ -88,7 +90,7 @@ function ApprovePage() {
             <ul className="mt-1 list-disc pl-5 text-amber-700">
               {overlaps.map((o) => (
                 <li key={o.id}>
-                  {getUserById(o.employeeId)?.name} ·{' '}
+                  {nameById.get(o.employeeId)} ·{' '}
                   {formatDateRange(o.currentVersion.dates.map((d) => d.date))}
                 </li>
               ))}
@@ -105,10 +107,9 @@ function ApprovePage() {
             icon={<Check className="size-4" />}
             disabled={approve.isPending}
             onClick={() =>
-              approve.mutate(
-                { id: request.id, actor: manager },
-                { onSuccess: () => done('Request approved') },
-              )
+              approve.mutate(request.id, {
+                onSuccess: () => done('Request approved'),
+              })
             }
           >
             Approve
@@ -130,7 +131,7 @@ function ApprovePage() {
             icon={<Check className="size-4" />}
             onClick={() =>
               decideCancel.mutate(
-                { id: request.id, actor: manager, approve: true },
+                { id: request.id, approve: true },
                 { onSuccess: () => done('Cancellation approved, balance restored') },
               )
             }
@@ -141,7 +142,7 @@ function ApprovePage() {
             variant="secondary"
             onClick={() =>
               decideCancel.mutate(
-                { id: request.id, actor: manager, approve: false },
+                { id: request.id, approve: false },
                 { onSuccess: () => done('Cancellation denied') },
               )
             }
@@ -189,7 +190,7 @@ function ApprovePage() {
               disabled={!comment.trim()}
               onClick={() =>
                 reject.mutate(
-                  { id: request.id, actor: manager, comment: comment.trim() },
+                  { id: request.id, comment: comment.trim() },
                   {
                     onSuccess: () => {
                       setRejectOpen(false)

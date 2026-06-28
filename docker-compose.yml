@@ -1,0 +1,61 @@
+# Local AWS-free data layer for atiom-leave.
+#   docker compose up -d   → DynamoDB Local :8000 + admin :8001,
+#                            MinIO (S3) :9000 + console :9001,
+#                            Mailpit (SMTP) :1025 + mail UI :8025
+# Data persists in ./.dynamodb and ./.minio (both gitignored).
+#
+# MinIO stands in for the Phase-2 S3 attachments bucket; Mailpit stands in for
+# SES. In AWS (Phase 3) both are dropped — the API talks to real S3/SES instead
+# (S3_ENDPOINT unset, EMAIL_MODE=ses). See docs/production-migration-plan.md.
+
+services:
+  dynamodb:
+    image: amazon/dynamodb-local:latest
+    container_name: atiom-leave-dynamodb
+    command: ['-jar', 'DynamoDBLocal.jar', '-sharedDb', '-dbPath', '/data']
+    ports:
+      - '8000:8000'
+    volumes:
+      - ./.dynamodb:/data
+    working_dir: /home/dynamodblocal
+
+  dynamodb-admin:
+    image: aaronshaf/dynamodb-admin:latest
+    container_name: atiom-leave-dynamodb-admin
+    ports:
+      - '8001:8001'
+    environment:
+      DYNAMO_ENDPOINT: http://dynamodb:8000
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: local
+      AWS_SECRET_ACCESS_KEY: local
+    depends_on:
+      - dynamodb
+
+  # S3-compatible object store for leave-request attachments (presigned PUT/GET).
+  #   API :9000 (SDK endpoint), web console :9001 (login minioadmin/minioadmin)
+  minio:
+    image: minio/minio:latest
+    container_name: atiom-leave-minio
+    command: ['server', '/data', '--console-address', ':9001']
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      # Allow browser presigned PUT/GET from any local origin. MinIO has no
+      # per-bucket CORS API (S3 PutBucketCors → 501); CORS is global here. In
+      # AWS (Phase 3) the real bucket's CORS is set on the bucket via CDK.
+      MINIO_API_CORS_ALLOW_ORIGIN: '*'
+    volumes:
+      - ./.minio:/data
+
+  # SMTP sink standing in for SES. Catches all mail; nothing leaves the machine.
+  #   SMTP :1025 · web UI http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: atiom-leave-mailpit
+    ports:
+      - '1025:1025'
+      - '8025:8025'

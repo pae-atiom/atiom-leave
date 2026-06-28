@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useActiveApprovedRequests } from '#/queries/requests'
+import { useUsers } from '#/queries/directory'
 import { toCalendarLeaves } from '#/lib/calendar'
 import { PageHeader, PageLoader } from '#/components/ui/Feedback'
 import { CalendarView } from '#/components/calendar/CalendarView'
@@ -10,6 +11,7 @@ export const Route = createFileRoute('/_auth/employee/calendar')({
 
 function CompanyCalendar() {
   const { data: requests, isPending } = useActiveApprovedRequests()
+  const { data: users = [] } = useUsers()
 
   if (isPending) return <PageLoader />
 
@@ -20,7 +22,9 @@ function CompanyCalendar() {
         description="Who's off across the company."
       />
       <CalendarView
-        leaves={toCalendarLeaves(requests ?? [], { canSeeType: () => false })}
+        leaves={toCalendarLeaves(requests ?? [], users, {
+          canSeeType: () => false,
+        })}
       />
     </div>
   )

@@ -2,56 +2,92 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from 'react'
 import type { ReactNode } from 'react'
-import type { AuthSession, User, UserRole } from '#/types'
-import { clearAuth, getAuth, setAuth } from '#/lib/auth'
-import { getUserById } from '#/store/users'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import type { User, UserRole } from '#/types'
+import { api } from '#/lib/api'
+import {
+  hasSession as providerHasSession,
+  signIn as providerSignIn,
+  signOut as providerSignOut,
+} from '#/lib/auth'
+
+type AuthStatus = 'loading' | 'authed' | 'anon'
 
 interface AuthContextValue {
-  session: AuthSession | null
   user: User | null
   role: UserRole | null
-  login: (user: User) => void
-  switchUser: (user: User) => void
-  logout: () => void
+  status: AuthStatus
+  signIn: (email: string, password: string) => Promise<void>
+  signOut: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<AuthSession | null>(() => getAuth())
+  const qc = useQueryClient()
+  // null = still checking for a stored session; true/false once resolved.
+  const [sessionPresent, setSessionPresent] = useState<boolean | null>(null)
 
-  const apply = useCallback((next: AuthSession | null) => {
-    if (next) setAuth(next)
-    else clearAuth()
-    setSession(next)
+  useEffect(() => {
+    providerHasSession().then(setSessionPresent)
   }, [])
 
-  const login = useCallback(
-    (user: User) => apply({ userId: user.id, role: user.role }),
-    [apply],
-  )
-  const switchUser = useCallback(
-    (user: User) => apply({ userId: user.id, role: user.role }),
-    [apply],
-  )
-  const logout = useCallback(() => apply(null), [apply])
+  const meQuery = useQuery({
+    queryKey: ['me'],
+    queryFn: () => api.me(),
+    enabled: sessionPresent === true,
+    retry: false,
+    staleTime: Infinity,
+  })
 
-  const user = session ? (getUserById(session.userId) ?? null) : null
+  // A stored-but-invalid session (e.g. unknown email / expired token) must not
+  // trap the user on a loader — drop it and fall back to the login screen.
+  useEffect(() => {
+    if (meQuery.isError) {
+      providerSignOut().finally(() => setSessionPresent(false))
+    }
+  }, [meQuery.isError])
+
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      await providerSignIn(email, password)
+      setSessionPresent(true)
+      await qc.fetchQuery({ queryKey: ['me'], queryFn: () => api.me() })
+    },
+    [qc],
+  )
+
+  const signOut = useCallback(async () => {
+    await providerSignOut()
+    setSessionPresent(false)
+    qc.clear()
+  }, [qc])
+
+  const status: AuthStatus =
+    sessionPresent === null
+      ? 'loading'
+      : sessionPresent === false
+        ? 'anon'
+        : meQuery.data
+          ? 'authed'
+          : meQuery.isError
+            ? 'anon'
+            : 'loading'
 
   const value = useMemo<AuthContextValue>(
     () => ({
-      session,
-      user,
-      role: session?.role ?? null,
-      login,
-      switchUser,
-      logout,
+      user: meQuery.data?.user ?? null,
+      role: meQuery.data?.role ?? null,
+      status,
+      signIn,
+      signOut,
     }),
-    [session, user, login, switchUser, logout],
+    [meQuery.data, status, signIn, signOut],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
@@ -63,7 +99,7 @@ export function useAuth(): AuthContextValue {
   return ctx
 }
 
-/** Convenience for routes that require a signed-in user. */
+/** Convenience for routes that require a signed-in user (rendered inside _auth). */
 export function useCurrentUser(): User {
   const { user } = useAuth()
   if (!user) throw new Error('No authenticated user')

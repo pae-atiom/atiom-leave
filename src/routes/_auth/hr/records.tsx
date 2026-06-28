@@ -9,9 +9,8 @@ import {
   toCsv,
 } from '#/lib/utils'
 import { LEAVE_TYPE_LABEL, STATUS_LABEL } from '#/lib/labels'
-import { getUserById } from '#/store/users'
-import { getAuditByRequest } from '#/store/auditLog'
-import { useAllRequests } from '#/queries/requests'
+import { useAllRequests, useAuditTrail } from '#/queries/requests'
+import { useUsers } from '#/queries/directory'
 import { Button } from '#/components/ui/Button'
 import { Select } from '#/components/ui/Field'
 import { Card } from '#/components/ui/Card'
@@ -35,9 +34,15 @@ const STATUSES: RequestStatus[] = [
 
 function Records() {
   const { data: requests, isPending } = useAllRequests()
+  const { data: users = [] } = useUsers()
   const [status, setStatus] = useState<string>('all')
   const [type, setType] = useState<string>('all')
   const [selected, setSelected] = useState<LeaveRequest | null>(null)
+
+  const userById = useMemo(
+    () => new Map(users.map((u) => [u.id, u])),
+    [users],
+  )
 
   const filtered = useMemo(() => {
     return (requests ?? []).filter((r) => {
@@ -51,8 +56,8 @@ function Records() {
 
   function exportCsv() {
     const rows = filtered.map((r) => {
-      const emp = getUserById(r.employeeId)
-      const mgr = getUserById(r.managerId)
+      const emp = userById.get(r.employeeId)
+      const mgr = userById.get(r.managerId)
       const dates = r.currentVersion.dates.map((d) => d.date).sort()
       return [
         emp?.name ?? r.employeeId,
@@ -155,7 +160,7 @@ function Records() {
                     className="cursor-pointer hover:bg-slate-50/60"
                   >
                     <td className="px-5 py-3 font-medium text-slate-800">
-                      {getUserById(r.employeeId)?.name}
+                      {userById.get(r.employeeId)?.name}
                     </td>
                     <td className="px-4 py-3 text-slate-600">
                       {LEAVE_TYPE_LABEL[r.currentVersion.leaveType]}
@@ -188,14 +193,14 @@ function Records() {
         title="Request detail"
         size="lg"
       >
-        {selected && (
-          <LeaveRequestDetail
-            request={selected}
-            audit={getAuditByRequest(selected.id)}
-            showEmployee
-          />
-        )}
+        {selected && <RecordDetail request={selected} />}
       </Modal>
     </div>
   )
+}
+
+/** Request detail for the records modal — pulls the audit trail by query. */
+function RecordDetail({ request }: { request: LeaveRequest }) {
+  const { data: audit = [] } = useAuditTrail(request.id)
+  return <LeaveRequestDetail request={request} audit={audit} showEmployee />
 }

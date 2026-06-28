@@ -46,7 +46,7 @@ function EditRequest() {
         }}
         onSubmit={(input) =>
           edit.mutate(
-            { id: request.id, actor: user, input },
+            { id: request.id, input },
             {
               onSuccess: () => {
                 toast('Request updated and resubmitted', 'success')
