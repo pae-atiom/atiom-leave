@@ -108,15 +108,12 @@ function RequestDetailPage() {
             <Button
               variant="danger"
               onClick={() =>
-                withdraw.mutate(
-                  { id: request.id, actor: user },
-                  {
-                    onSuccess: () => {
-                      toast('Request withdrawn', 'success')
-                      setWithdrawOpen(false)
-                    },
+                withdraw.mutate(request.id, {
+                  onSuccess: () => {
+                    toast('Request withdrawn', 'success')
+                    setWithdrawOpen(false)
                   },
-                )
+                })
               }
             >
               Withdraw
@@ -144,7 +141,7 @@ function RequestDetailPage() {
               disabled={!cancelReason.trim()}
               onClick={() =>
                 requestCancel.mutate(
-                  { id: request.id, actor: user, reason: cancelReason.trim() },
+                  { id: request.id, reason: cancelReason.trim() },
                   {
                     onSuccess: () => {
                       toast('Cancellation sent for approval', 'success')

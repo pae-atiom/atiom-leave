@@ -1,5 +1,31 @@
 Welcome to your new TanStack Start app! 
 
+# Local development (Phase 1 — AWS serverless)
+
+The app is a static React SPA → API Gateway/Lambda (Hono) → DynamoDB, with
+Cognito auth. Locally it runs fully AWS-free: DynamoDB Local in Docker + a dev
+auth token (`AUTH_MODE=local`, no Cognito needed). See
+`docs/production-migration-plan.md` for the full design.
+
+```bash
+bun install
+cp .env.example .env          # local defaults: DynamoDB :8000, API :3100, web :3000
+
+bun run db:up                 # 1. DynamoDB Local (+ admin UI on :8001) via Docker
+bun run api:tables            # 2. create tables
+bun run api:seed              # 3. seed the demo dataset
+
+bun run api:dev               # 4a. API on :3100  (one terminal)
+bun run dev                   # 4b. web on :3000  (another terminal)
+```
+
+Sign in at http://localhost:3000/login with any seeded email (password is
+ignored locally): `alice@atiom.app` (employee), `dana@atiom.app` (manager),
+`frank@atiom.app` (HR). Reset local data anytime with `bun run local:reset`.
+
+Layout: `shared/` (types + pure logic, imported by both sides), `api/` (Lambda
+backend + scripts), `infra/` (AWS CDK), `src/` (web SPA).
+
 # Getting Started
 
 To run this application:

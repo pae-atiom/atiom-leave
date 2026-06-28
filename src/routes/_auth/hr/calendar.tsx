@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useActiveApprovedRequests } from '#/queries/requests'
+import { useUsers } from '#/queries/directory'
 import { toCalendarLeaves } from '#/lib/calendar'
 import { PageHeader, PageLoader } from '#/components/ui/Feedback'
 import { CalendarView } from '#/components/calendar/CalendarView'
@@ -11,6 +12,7 @@ export const Route = createFileRoute('/_auth/hr/calendar')({
 
 function CompanyCalendar() {
   const { data: requests, isPending } = useActiveApprovedRequests()
+  const { data: users = [] } = useUsers()
   const [privacy, setPrivacy] = useState(false)
 
   if (isPending) return <PageLoader />
@@ -22,7 +24,7 @@ function CompanyCalendar() {
         description="All approved leave across the company."
       />
       <CalendarView
-        leaves={toCalendarLeaves(requests ?? [])}
+        leaves={toCalendarLeaves(requests ?? [], users)}
         privacy={privacy}
         onTogglePrivacy={() => setPrivacy((v) => !v)}
       />

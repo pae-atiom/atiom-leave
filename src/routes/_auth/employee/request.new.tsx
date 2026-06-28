@@ -25,16 +25,13 @@ function NewRequest() {
         user={user}
         submitting={create.isPending}
         onSubmit={(input) =>
-          create.mutate(
-            { employee: user, input },
-            {
-              onSuccess: (req) => {
-                toast('Leave request submitted', 'success')
-                navigate({ to: `/employee/request/${req.id}` })
-              },
-              onError: () => toast('Could not submit request', 'error'),
+          create.mutate(input, {
+            onSuccess: (req) => {
+              toast('Leave request submitted', 'success')
+              navigate({ to: `/employee/request/${req.id}` })
             },
-          )
+            onError: () => toast('Could not submit request', 'error'),
+          })
         }
       />
     </div>

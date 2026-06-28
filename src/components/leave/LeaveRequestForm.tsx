@@ -5,9 +5,9 @@ import type {
   DateEntry,
   DayDuration,
   LeaveTypeName,
+  RequestInput,
   User,
 } from '#/types'
-import type { RequestInput } from '#/store/leaveRequests'
 import { cn } from '#/lib/utils'
 import { usePolicies } from '#/queries/directory'
 import { useLeaveCalculation } from '#/hooks/useLeaveCalculation'

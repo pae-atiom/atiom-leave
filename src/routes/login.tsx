@@ -1,30 +1,39 @@
+import { useEffect, useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { CalendarCheck2, ChevronRight } from 'lucide-react'
-import type { User, UserRole } from '#/types'
-import { homePathForRole } from '#/lib/auth'
+import { CalendarCheck2 } from 'lucide-react'
+import { AUTH_MODE } from '#/lib/config'
 import { useAuth } from '#/hooks/useAuth'
-import { useUsers } from '#/queries/directory'
-import { Spinner } from '#/components/ui/Feedback'
+import { Button } from '#/components/ui/Button'
+import { FieldGroup, Input } from '#/components/ui/Field'
 import { ThemeToggle } from '#/components/layout/ThemeToggle'
 
 export const Route = createFileRoute('/login')({ component: LoginPage })
 
-const ROLE_LABEL: Record<UserRole, string> = {
-  employee: 'Employee',
-  manager: 'Manager',
-  hr: 'HR / Admin',
-}
-
-const ROLE_ORDER: UserRole[] = ['employee', 'manager', 'hr']
-
 function LoginPage() {
-  const { login } = useAuth()
+  const { signIn, status } = useAuth()
   const navigate = useNavigate()
-  const { data: users, isPending } = useUsers()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
-  function signIn(user: User) {
-    login(user)
-    navigate({ to: homePathForRole(user.role) })
+  // Already signed in → leave the login screen.
+  useEffect(() => {
+    if (status === 'authed') navigate({ to: '/' })
+  }, [status, navigate])
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setSubmitting(true)
+    try {
+      await signIn(email, password)
+      navigate({ to: '/' })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign-in failed')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -41,56 +50,56 @@ function LoginPage() {
             Atiom Leave
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Demo sign-in — pick a user to explore their role.
+            Sign in with your work email and password.
           </p>
         </div>
 
-        <div className="rounded-2xl bg-surface p-2 shadow-sm ring-1 ring-slate-200">
-          {isPending ? (
-            <div className="flex h-32 items-center justify-center">
-              <Spinner className="size-5" />
-            </div>
-          ) : (
-            ROLE_ORDER.map((role) => {
-              const roleUsers = (users ?? []).filter((u) => u.role === role)
-              if (roleUsers.length === 0) return null
-              return (
-                <div key={role} className="px-2 py-2">
-                  <p className="px-2 pb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    {ROLE_LABEL[role]}
-                  </p>
-                  <div className="flex flex-col gap-1">
-                    {roleUsers.map((user) => (
-                      <button
-                        key={user.id}
-                        onClick={() => signIn(user)}
-                        className="group flex items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-slate-50"
-                      >
-                        <span className="flex size-9 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700">
-                          {user.avatarInitials}
-                        </span>
-                        <span className="flex-1">
-                          <span className="block text-sm font-medium text-slate-900">
-                            {user.name}
-                          </span>
-                          <span className="block text-xs text-slate-500">
-                            {user.email}
-                          </span>
-                        </span>
-                        <ChevronRight className="size-4 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-400" />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )
-            })
-          )}
-        </div>
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-sm ring-1 ring-slate-200"
+        >
+          <FieldGroup label="Email" htmlFor="email">
+            <Input
+              id="email"
+              type="email"
+              autoComplete="username"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@atiom.app"
+              required
+            />
+          </FieldGroup>
+          <FieldGroup label="Password" htmlFor="password">
+            <Input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+            />
+          </FieldGroup>
 
-        <p className="mt-6 text-center text-xs text-slate-400">
-          No passwords — this is a mocked POC. You can switch users anytime from
-          the top bar.
-        </p>
+          {error && (
+            <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+              {error}
+            </p>
+          )}
+
+          <Button type="submit" disabled={submitting} className="w-full">
+            {submitting ? 'Signing in…' : 'Sign in'}
+          </Button>
+        </form>
+
+        {AUTH_MODE === 'local' && (
+          <p className="mt-6 text-center text-xs text-slate-400">
+            Local dev — any password works. Try{' '}
+            <span className="font-medium text-slate-500">alice@atiom.app</span>{' '}
+            (employee), <span className="font-medium text-slate-500">dana@atiom.app</span>{' '}
+            (manager) or{' '}
+            <span className="font-medium text-slate-500">frank@atiom.app</span> (HR).
+          </p>
+        )}
       </div>
     </div>
   )

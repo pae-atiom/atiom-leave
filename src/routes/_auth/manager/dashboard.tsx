@@ -5,7 +5,7 @@ import {
   usePendingForManager,
   useRequestsByManager,
 } from '#/queries/requests'
-import { getUserById } from '#/store/users'
+import { useUsers } from '#/queries/directory'
 import { EmptyState, PageHeader, PageLoader } from '#/components/ui/Feedback'
 import { LeaveRequestCard } from '#/components/leave/LeaveRequestCard'
 
@@ -17,9 +17,11 @@ function ManagerDashboard() {
   const manager = useCurrentUser()
   const pending = usePendingForManager(manager.id)
   const all = useRequestsByManager(manager.id)
+  const { data: users = [] } = useUsers()
 
   if (pending.isPending || all.isPending) return <PageLoader />
 
+  const nameById = new Map(users.map((u) => [u.id, u.name]))
   const queue = pending.data ?? []
   const decidedThisCount = (all.data ?? []).filter(
     (r) => r.status === 'approved',
@@ -55,7 +57,7 @@ function ManagerDashboard() {
               request={r}
               to={`/manager/approve/${r.id}`}
               showEmployee
-              employeeName={getUserById(r.employeeId)?.name}
+              employeeName={nameById.get(r.employeeId)}
             />
           ))}
         </div>

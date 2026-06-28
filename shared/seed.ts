@@ -1,9 +1,9 @@
-// Seeded demo dataset + reset. Bump SEED_VERSION to force a re-seed when the
-// shape changes. Balances' `used` is derived from the seeded requests so the
-// demo is internally consistent on first load.
+// Seeded demo dataset. Ported unchanged from the old localStorage store so the
+// DynamoDB seeder (`api/scripts/seed.ts`) writes the exact same demo world.
+// Balances' `used` is derived from the seeded requests so the demo is
+// internally consistent on first load.
 
 import type {
-  AppStore,
   AuditLogEntry,
   Department,
   LeaveBalance,
@@ -14,11 +14,22 @@ import type {
   Notification,
   RequestStatus,
   User,
-} from '#/types'
-import { calculateTotalDays } from '#/logic/leaveCalc'
+} from './types'
+import { calculateTotalDays } from './logic/leaveCalc'
 
 export const SEED_VERSION = 2
 export const SEED_YEAR = 2026
+
+/** The full seeded dataset (no localStorage / no AppStore wrapper). */
+export interface SeedDataset {
+  users: User[]
+  departments: Department[]
+  leavePolicies: LeavePolicy[]
+  leaveBalances: LeaveBalance[]
+  leaveRequests: LeaveRequest[]
+  notifications: Notification[]
+  auditLog: AuditLogEntry[]
+}
 
 // Annual leave is not uniform across the company — it varies per person (e.g. by
 // seniority). The policy's `annualEntitlementDays` is only the company default;
@@ -32,8 +43,6 @@ const ANNUAL_ENTITLEMENT_BY_USER: Record<string, number> = {
   mgr2: 22, // Eva — manager
   hr1: 25, // Frank — most senior
 }
-
-const LS_KEY = 'atiom_leave_store'
 
 // ─── Users & departments ──────────────────────────────────────────────────────
 
@@ -517,7 +526,8 @@ function buildBalances(requests: LeaveRequest[]): LeaveBalance[] {
   return balances
 }
 
-export function buildSeedStore(): AppStore {
+/** Build the full seeded dataset, ready to write to DynamoDB. */
+export function buildSeedDataset(): SeedDataset {
   const built = requestSpecs.map(buildRequest)
   const leaveRequests = built.map((b) => b.request)
   const auditLog = built.flatMap((b) => b.audit)
@@ -532,13 +542,5 @@ export function buildSeedStore(): AppStore {
     leaveRequests,
     notifications,
     auditLog,
-    seedVersion: SEED_VERSION,
   }
-}
-
-/** Reset localStorage back to a fresh seed and clear the auth session. */
-export function resetStore(): void {
-  if (typeof localStorage === 'undefined') return
-  localStorage.setItem(LS_KEY, JSON.stringify(buildSeedStore()))
-  localStorage.removeItem('atiom_leave_auth')
 }

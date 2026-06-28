@@ -1,6 +1,5 @@
-import type { LeaveRequest } from '#/types'
+import type { LeaveRequest, User } from '#/types'
 import type { CalendarLeave } from '#/components/calendar/CalendarView'
-import { getUserById } from '#/store/users'
 
 export interface CalendarVisibility {
   /**
@@ -10,14 +9,20 @@ export interface CalendarVisibility {
   canSeeType?: (employeeId: string) => boolean
 }
 
-/** Expand approved/active requests into one CalendarLeave per date. */
+/**
+ * Expand approved/active requests into one CalendarLeave per date. Employee
+ * names are resolved from the supplied user list (the directory query) rather
+ * than a synchronous store lookup.
+ */
 export function toCalendarLeaves(
   requests: LeaveRequest[],
+  users: User[],
   { canSeeType }: CalendarVisibility = {},
 ): CalendarLeave[] {
+  const nameById = new Map(users.map((u) => [u.id, u.name]))
   const out: CalendarLeave[] = []
   for (const req of requests) {
-    const name = getUserById(req.employeeId)?.name ?? 'Unknown'
+    const name = nameById.get(req.employeeId) ?? 'Unknown'
     const showType = canSeeType ? canSeeType(req.employeeId) : true
     for (const entry of req.currentVersion.dates) {
       out.push({
